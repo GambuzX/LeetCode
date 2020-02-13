@@ -1,6 +1,8 @@
 class Solution {
 public:
+    int i;
     string countOfAtoms(string formula) {
+        i = 0;
         map<string, int> elements = getFormulaCounts(formula);        
         return buildResultFormula(elements);
     }
@@ -8,67 +10,49 @@ public:
     map<string,int> getFormulaCounts(const string & formula) {
         map<string, int> elements;
         
-        string curr = "";
-        string count = "";
-        for (int i = 0; i < formula.length(); i++) {
+        while(i < formula.length() && formula[i] != ')') {
             
-            // new element
             if (isupper(formula[i])) {
                 
-                // already had something
-                if (curr.length() != 0) 
-                    elements[curr] += (count.length() != 0 ? stoi(count) : 1);
+                string curr(1, formula[i++]);
+                string count = "";
                 
-                curr = formula[i];
-                count = "";
-            }
-            // part of element
-            else if (islower(formula[i])) {
-                curr += formula[i];
-            }
-            
-            // digit
-            else if (isdigit(formula[i])) {
-                count += formula[i];
+                while(islower(formula[i])) {
+                    curr += formula[i++];
+                }
+                
+                while(isdigit(formula[i])) {
+                    count += formula[i++];
+                }             
+                
+                elements[curr] += (count.length() != 0 ? stoi(count) : 1);
             }
             
             // parentheses
             else if (formula[i] == '(') {
-                
-                // slice formula inside parentheses
-                size_t closing = formula.find_last_of(')');
-                string subformula = formula.substr(i+1, closing - i - 1);
-                
-                // recursively call this function
-                map<string,int> recursive_res = getFormulaCounts(subformula);
-                
-                // check count after subformula
-                string sub_count = "";
-                int j = closing+1;
-                for (; j < formula.length(); j++) {
-                    if (!isdigit(formula[j])) break;
-                    sub_count += formula[j];
-                }
-                
-                // add results
-                for (auto & ele : recursive_res) {
-                    elements[ele.first] += ele.second * (sub_count.length() != 0 ? stoi(sub_count) : 1);
-                }
-                
-                // increment counter
-                i = j;
+                i++;
+                map<string,int> recursive_res = getFormulaCounts(formula);
+                for(auto & ele : recursive_res) 
+                    elements[ele.first] += ele.second;
             }
         }
         
-        // remaining element
-        if (curr.length() != 0)
-            elements[curr] += (count.length() != 0 ? stoi(count) : 1);
+        i++;
+        string count = "";                
+        while(i < formula.length() && isdigit(formula[i])) {
+            count += formula[i++];
+        }
+        
+        int mult = count.length() != 0 ? stoi(count) : 1;
+        for(auto & ele : elements) {
+            ele.second *= mult;
+        }
         
         return elements;
     }
     
     string buildResultFormula(map<string, int> & elements) {
-        string res;
+        string res = "";
         
         for (auto & ele : elements) {
             res += ele.first;
@@ -79,3 +63,42 @@ public:
         return res;
     }
 };
+
+string stringToString(string input) {
+    assert(input.length() >= 2);
+    string result;
+    for (int i = 1; i < input.length() -1; i++) {
+        char currentChar = input[i];
+        if (input[i] == '\\') {
+            char nextChar = input[i+1];
+            switch (nextChar) {
+                case '\"': result.push_back('\"'); break;
+                case '/' : result.push_back('/'); break;
+                case '\\': result.push_back('\\'); break;
+                case 'b' : result.push_back('\b'); break;
+                case 'f' : result.push_back('\f'); break;
+                case 'r' : result.push_back('\r'); break;
+                case 'n' : result.push_back('\n'); break;
+                case 't' : result.push_back('\t'); break;
+                default: break;
+            }
+            i++;
+        } else {
+          result.push_back(currentChar);
+        }
+    }
+    return result;
+}
+
+int main() {
+    string line;
+    while (getline(cin, line)) {
+        string formula = stringToString(line);
+        
+        string ret = Solution().countOfAtoms(formula);
+
+        string out = (ret);
+        cout << out << endl;
+    }
+    return 0;
+}
